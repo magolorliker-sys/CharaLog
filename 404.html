@@ -26,5 +26,16 @@
     </div>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="_framework/blazor.webassembly.66stpp682q.js"></script>
+<script>
+(function () {
+    const l = window.location;
+    if (l.search[1] === '/') {
+        const decoded = l.search.slice(1);
+        window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+        );
+    }
+})();
+</script>
 </body>
 </html>
