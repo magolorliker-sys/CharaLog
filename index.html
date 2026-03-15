@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CharaLog</title>
     <base href="/CharaLog/" />
+<script type="text/javascript">
+    (function(l) {
+        if (l.search[1] === '/' ) {
+            var decoded = l.search.slice(1).split('&').map(function(s) { 
+                return s.replace(/~and~/g, '&') 
+            }).filter(function(v) {
+                return v.indexOf('p=/') === 0
+            })[0].replace('p=/', '');
+            if (decoded !== l.pathname.slice(l.pathname.lastIndexOf('/') + 1)) {
+                window.history.replaceState(null, null,
+                    l.pathname.slice(0, l.pathname.lastIndexOf('/') + 1) + decoded + (l.search.slice(1).split('&').filter(function(v) {return v.indexOf('p=/') !== 0}).length > 0 ? '&' + l.search.slice(1).split('&').filter(function(v) {return v.indexOf('p=/') !== 0}).join('&') : '') + l.hash
+                );
+            }
+        }
+    }(window.location))
+</script>
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
