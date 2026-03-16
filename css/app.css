@@ -151,7 +151,7 @@ code {
     background: var(--mud-palette-primary-hover);
 }
 
-/* ── Dark Mode Overrides ── */
+/* ── Dark Mode Overrides with Improved Visibility ── */
 :root {
     --mud-palette-black: #1a1a1a;
     --mud-palette-white: #ffffff;
@@ -163,30 +163,296 @@ code {
     --mud-palette-appbar-background: #121212;
     --mud-palette-appbar-text: #ffffff;
     --mud-palette-text-primary: #ffffff;
-    --mud-palette-text-secondary: #b0b0b0;
+    --mud-palette-text-secondary: #d0d0d0;
     --mud-palette-divider: #3a3a3a;
     --mud-palette-lines-default: #3a3a3a;
     --mud-palette-background-grey: #2a2a2a;
 }
 
-body {
+/* Global text and background */
+html, body {
     background-color: #1a1a1a !important;
     color: #ffffff !important;
 }
 
-.mud-paper { background-color: #252525 !important; color: #ffffff !important; }
-.mud-drawer { background-color: #1e1e1e !important; color: #ffffff !important; }
-.mud-appbar { background-color: #121212 !important; color: #ffffff !important; }
-.mud-nav-link { color: #ffffff !important; }
-.mud-nav-link:hover { background-color: rgba(255,255,255,0.05) !important; }
-.mud-text-primary { color: #ffffff !important; }
-.mud-text-secondary { color: #b0b0b0 !important; }
-.mud-icon-root { color: #b0b0b0 !important; }
-.mud-icon-primary { color: #e8763a !important; }
-.mud-button-filled-primary { background-color: #e8763a !important; color: #ffffff !important; }
-.mud-divider { border-color: #3a3a3a !important; }
-.mud-input { color: #ffffff !important; }
-.mud-input-label { color: #b0b0b0 !important; }
-.mud-input-slot { color: #ffffff !important; }
-.mud-table { background-color: #252525 !important; color: #ffffff !important; }
-.mud-table-cell { color: #ffffff !important; border-bottom: 1px solid #3a3a3a !important; }
+/* MudBlazor Components - Enhanced Visibility */
+.mud-paper { 
+    background-color: #252525 !important; 
+    color: #ffffff !important; 
+    border: 1px solid #3a3a3a !important;
+}
+
+.mud-paper-outlined {
+    border: 1px solid #3a3a3a !important;
+}
+
+.mud-drawer { 
+    background-color: #1e1e1e !important; 
+    color: #ffffff !important; 
+}
+
+.mud-appbar { 
+    background-color: #121212 !important; 
+    color: #ffffff !important; 
+}
+
+/* Navigation Links */
+.mud-nav-link { 
+    color: #ffffff !important; 
+}
+
+.mud-nav-link:hover { 
+    background-color: rgba(232, 118, 58, 0.1) !important; 
+}
+
+.mud-nav-link.active {
+    color: #e8763a !important;
+}
+
+/* Text Components */
+.mud-text, .mud-typography {
+    color: #ffffff !important;
+}
+
+.mud-text-primary, .mud-typography-primary { 
+    color: #ffffff !important; 
+}
+
+.mud-text-secondary, .mud-typography-secondary { 
+    color: #d0d0d0 !important; 
+}
+
+.mud-text-disabled { 
+    color: #808080 !important; 
+}
+
+/* Icons */
+.mud-icon-root, .mud-icon-button { 
+    color: #d0d0d0 !important; 
+}
+
+.mud-icon-primary { 
+    color: #e8763a !important; 
+}
+
+.mud-icon-secondary { 
+    color: #d0d0d0 !important; 
+}
+
+.mud-icon-disabled { 
+    color: #606060 !important; 
+}
+
+/* Buttons */
+.mud-button {
+    color: #ffffff !important;
+}
+
+.mud-button-filled-primary { 
+    background-color: #e8763a !important; 
+    color: #ffffff !important; 
+}
+
+.mud-button-filled-secondary { 
+    background-color: #4a4a4a !important; 
+    color: #ffffff !important; 
+}
+
+.mud-button-outlined {
+    border-color: #3a3a3a !important;
+    color: #ffffff !important;
+}
+
+.mud-button-outlined:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.mud-icon-button {
+    color: #d0d0d0 !important;
+}
+
+.mud-icon-button:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Dividers */
+.mud-divider { 
+    border-color: #3a3a3a !important; 
+}
+
+/* Input Fields */
+.mud-input {
+    color: #ffffff !important;
+}
+
+.mud-input-root {
+    color: #ffffff !important;
+}
+
+.mud-input-label {
+    color: #d0d0d0 !important;
+}
+
+.mud-input-slot {
+    color: #ffffff !important;
+}
+
+.mud-input-outlined {
+    border-color: #3a3a3a !important;
+}
+
+.mud-input-outlined:hover {
+    border-color: #4a4a4a !important;
+}
+
+.mud-input-outlined.mud-focused {
+    border-color: #e8763a !important;
+}
+
+/* TextFields and Inputs */
+.mud-text-field {
+    color: #ffffff !important;
+}
+
+.mud-text-field input {
+    color: #ffffff !important;
+    background-color: #2a2a2a !important;
+}
+
+.mud-text-field input::placeholder {
+    color: #808080 !important;
+}
+
+.mud-text-field label {
+    color: #d0d0d0 !important;
+}
+
+/* Select Components */
+.mud-select {
+    color: #ffffff !important;
+}
+
+.mud-select-item {
+    color: #ffffff !important;
+}
+
+.mud-select-item:hover {
+    background-color: rgba(232, 118, 58, 0.1) !important;
+}
+
+.mud-select-item.selected {
+    background-color: rgba(232, 118, 58, 0.2) !important;
+    color: #e8763a !important;
+}
+
+/* Tables */
+.mud-table { 
+    background-color: #252525 !important; 
+    color: #ffffff !important; 
+}
+
+.mud-table-cell { 
+    color: #ffffff !important; 
+    border-bottom: 1px solid #3a3a3a !important; 
+}
+
+.mud-table-head {
+    background-color: #2a2a2a !important;
+}
+
+.mud-table-head .mud-table-cell {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* Cards */
+.mud-card {
+    background-color: #252525 !important;
+    color: #ffffff !important;
+    border: 1px solid #3a3a3a !important;
+}
+
+.mud-card-header {
+    background-color: #2a2a2a !important;
+}
+
+/* Snackbar */
+.mud-snackbar {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+}
+
+/* Dialog */
+.mud-dialog {
+    background-color: #252525 !important;
+    color: #ffffff !important;
+}
+
+.mud-dialog-title {
+    color: #ffffff !important;
+}
+
+/* Checkbox and Radio */
+.mud-checkbox, .mud-radio {
+    color: #d0d0d0 !important;
+}
+
+.mud-checkbox.mud-checked, .mud-radio.mud-checked {
+    color: #e8763a !important;
+}
+
+/* Tooltip */
+.mud-tooltip {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+}
+
+/* Expansion Panel */
+.mud-expand-panel {
+    background-color: #252525 !important;
+    color: #ffffff !important;
+}
+
+.mud-expand-panel-header {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+}
+
+/* Links */
+a, .mud-link {
+    color: #e8763a !important;
+}
+
+a:hover, .mud-link:hover {
+    color: #ff9966 !important;
+}
+
+/* Code */
+code {
+    background-color: #2a2a2a !important;
+    color: #ff9966 !important;
+}
+
+/* Progress Bar */
+.mud-progress-linear {
+    background-color: #3a3a3a !important;
+}
+
+/* Scrollbar styling (for webkit browsers) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #4a4a4a;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #5a5a5a;
+}
