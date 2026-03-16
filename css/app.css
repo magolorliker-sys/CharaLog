@@ -456,3 +456,312 @@ code {
 ::-webkit-scrollbar-thumb:hover {
     background-color: #5a5a5a;
 }
+
+
+/* ── Mobile Responsive Design ── */
+
+/* Tablet and smaller (max-width: 960px) */
+@media (max-width: 960px) {
+    .mud-container {
+        max-width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .mud-drawer {
+        width: 100% !important;
+        max-width: 280px !important;
+    }
+}
+
+/* Small devices (max-width: 600px) */
+@media (max-width: 600px) {
+    /* Global adjustments */
+    html, body {
+        font-size: 14px;
+    }
+    
+    /* AppBar adjustments */
+    .mud-appbar {
+        height: 56px !important;
+        padding: 0 0.5rem !important;
+    }
+    
+    .mud-appbar .mud-text {
+        font-size: 1.1rem !important;
+    }
+    
+    .mud-appbar .mud-icon-button {
+        padding: 0.5rem !important;
+    }
+    
+    /* Container padding */
+    .mud-container {
+        max-width: 100% !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    /* Drawer adjustments */
+    .mud-drawer {
+        width: 100% !important;
+        max-width: 100% !important;
+        position: fixed !important;
+        height: 100vh !important;
+        z-index: 1100 !important;
+    }
+    
+    .mud-drawer-overlay {
+        display: block !important;
+    }
+    
+    .mud-nav-menu {
+        padding: 0.5rem 0 !important;
+    }
+    
+    .mud-nav-link {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Grid adjustments for cards */
+    .mud-grid {
+        margin-left: -0.5rem !important;
+        margin-right: -0.5rem !important;
+    }
+    
+    .mud-grid-item {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    /* Force single column on mobile */
+    .mud-grid-item[style*="xs="12""],
+    .mud-grid-item[style*="xs=\"12\""] {
+        flex-basis: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Paper/Card adjustments */
+    .mud-paper {
+        padding: 1rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .mud-card {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Button adjustments */
+    .mud-button {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.9rem !important;
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+    
+    .mud-button-root {
+        width: 100% !important;
+    }
+    
+    /* Text field adjustments */
+    .mud-text-field {
+        margin-bottom: 1rem !important;
+    }
+    
+    .mud-input-label {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Table adjustments */
+    .mud-table {
+        font-size: 0.85rem !important;
+    }
+    
+    .mud-table-cell {
+        padding: 0.5rem !important;
+    }
+    
+    .mud-table-head .mud-table-cell {
+        padding: 0.75rem 0.5rem !important;
+    }
+    
+    /* Icon adjustments */
+    .mud-icon {
+        font-size: 1.25rem !important;
+    }
+    
+    .mud-icon-button .mud-icon {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Typography adjustments */
+    .mud-typography-h4 {
+        font-size: 1.5rem !important;
+    }
+    
+    .mud-typography-h5 {
+        font-size: 1.25rem !important;
+    }
+    
+    .mud-typography-h6 {
+        font-size: 1.1rem !important;
+    }
+    
+    .mud-typography-body1 {
+        font-size: 0.9rem !important;
+    }
+    
+    .mud-typography-body2 {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Divider adjustments */
+    .mud-divider {
+        margin: 1rem 0 !important;
+    }
+    
+    /* Dialog adjustments */
+    .mud-dialog {
+        width: 90vw !important;
+        max-width: 90vw !important;
+    }
+    
+    .mud-dialog-content {
+        padding: 1rem !important;
+    }
+    
+    /* Select/Dropdown adjustments */
+    .mud-select {
+        width: 100% !important;
+    }
+    
+    .mud-select-item {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    /* Snackbar adjustments */
+    .mud-snackbar {
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Spacing utilities */
+    .pa-6 {
+        padding: 1rem !important;
+    }
+    
+    .pa-5 {
+        padding: 0.75rem !important;
+    }
+    
+    .mb-6 {
+        margin-bottom: 1rem !important;
+    }
+    
+    .mb-4 {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    /* Custom CharaLog components */
+    .work-card {
+        margin-bottom: 1rem !important;
+    }
+    
+    .chara-card {
+        margin-bottom: 1rem !important;
+    }
+    
+    .stat-box {
+        padding: 0.75rem 0.5rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Ensure full width for main content */
+    .mud-main-content {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    /* Touch-friendly hit areas */
+    button, a, .mud-button, .mud-icon-button, .mud-nav-link {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+}
+
+/* Extra small devices (max-width: 480px) */
+@media (max-width: 480px) {
+    html, body {
+        font-size: 13px;
+    }
+    
+    .mud-appbar {
+        height: 52px !important;
+    }
+    
+    .mud-appbar .mud-text {
+        font-size: 1rem !important;
+    }
+    
+    .mud-container {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+    
+    .mud-button {
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .mud-typography-h4 {
+        font-size: 1.25rem !important;
+    }
+    
+    .mud-typography-h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    .mud-typography-h6 {
+        font-size: 1rem !important;
+    }
+    
+    .mud-paper {
+        padding: 0.75rem !important;
+    }
+    
+    .mud-grid-item {
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+    
+    .mud-table {
+        font-size: 0.8rem !important;
+    }
+    
+    .mud-table-cell {
+        padding: 0.4rem !important;
+    }
+}
+
+/* Landscape mode adjustments (max-height: 500px) */
+@media (max-height: 500px) and (orientation: landscape) {
+    .mud-appbar {
+        height: 48px !important;
+    }
+    
+    .mud-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    
+    .mud-paper {
+        padding: 0.75rem !important;
+    }
+}
