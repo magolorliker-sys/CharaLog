@@ -150,3 +150,43 @@ code {
     border-color: var(--mud-palette-primary) !important;
     background: var(--mud-palette-primary-hover);
 }
+
+/* ── Dark Mode Overrides ── */
+:root {
+    --mud-palette-black: #1a1a1a;
+    --mud-palette-white: #ffffff;
+    --mud-palette-primary: #e8763a;
+    --mud-palette-background: #1a1a1a;
+    --mud-palette-surface: #252525;
+    --mud-palette-drawer-background: #1e1e1e;
+    --mud-palette-drawer-text: #ffffff;
+    --mud-palette-appbar-background: #121212;
+    --mud-palette-appbar-text: #ffffff;
+    --mud-palette-text-primary: #ffffff;
+    --mud-palette-text-secondary: #b0b0b0;
+    --mud-palette-divider: #3a3a3a;
+    --mud-palette-lines-default: #3a3a3a;
+    --mud-palette-background-grey: #2a2a2a;
+}
+
+body {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+.mud-paper { background-color: #252525 !important; color: #ffffff !important; }
+.mud-drawer { background-color: #1e1e1e !important; color: #ffffff !important; }
+.mud-appbar { background-color: #121212 !important; color: #ffffff !important; }
+.mud-nav-link { color: #ffffff !important; }
+.mud-nav-link:hover { background-color: rgba(255,255,255,0.05) !important; }
+.mud-text-primary { color: #ffffff !important; }
+.mud-text-secondary { color: #b0b0b0 !important; }
+.mud-icon-root { color: #b0b0b0 !important; }
+.mud-icon-primary { color: #e8763a !important; }
+.mud-button-filled-primary { background-color: #e8763a !important; color: #ffffff !important; }
+.mud-divider { border-color: #3a3a3a !important; }
+.mud-input { color: #ffffff !important; }
+.mud-input-label { color: #b0b0b0 !important; }
+.mud-input-slot { color: #ffffff !important; }
+.mud-table { background-color: #252525 !important; color: #ffffff !important; }
+.mud-table-cell { color: #ffffff !important; border-bottom: 1px solid #3a3a3a !important; }
