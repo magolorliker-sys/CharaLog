@@ -21,23 +21,7 @@
 </script>
 </head>
 <body class="mud-dark-mode">
-    <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
-    </div>
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
-    </div>
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
-    <script src="lib/bootstrap/dist/js/downloadFile.js"></script>
-    <script src="_framework/blazor.webassembly.66stpp682q.js"></script>
-
-    <!-- Mobile Bottom Navigation -->
+    <!-- Mobile Bottom Navigation - FIXED POSITION AT BODY START -->
     <div id="mobile-bottom-nav-container" class="mobile-bottom-nav">
         <a href="." class="mobile-nav-item">
             <span class="mud-icon mud-svg-icon" style="color:inherit;"><svg viewBox="0 0 24 24"><path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/></svg></span>
@@ -56,36 +40,81 @@
             <span>設定</span>
         </a>
     </div>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="lib/bootstrap/dist/js/downloadFile.js"></script>
+    <script src="_framework/blazor.webassembly.66stpp682q.js"></script>
 
-    <!-- Mobile Bottom Nav Persistence Script -->
+    
+    <!-- ENHANCED Mobile Bottom Nav Persistence Script for ALL Pages -->
     <script>
     (function() {
         const navId = 'mobile-bottom-nav-container';
+        const navClass = 'mobile-bottom-nav';
+        
         function ensureNav() {
-            const nav = document.getElementById(navId);
-            if (!nav) return;
-            // Move to end of body if it's not there
-            if (nav.parentElement !== document.body) {
-                document.body.appendChild(nav);
+            let nav = document.getElementById(navId);
+            
+            // If nav doesn't exist, recreate it
+            if (!nav) {
+                console.warn('Nav missing, attempting to recreate...');
+                nav = document.createElement('div');
+                nav.id = navId;
+                nav.className = navClass;
+                nav.innerHTML = document.querySelector('[data-nav-backup]')?.innerHTML || '';
+                document.body.insertBefore(nav, document.body.firstChild);
             }
-            // Ensure it's visible on mobile
+            
+            // Ensure nav is at the start of body
+            if (nav.parentElement === document.body && nav !== document.body.firstChild) {
+                document.body.insertBefore(nav, document.body.firstChild);
+            }
+            
+            // Visibility control
             if (window.innerWidth <= 768) {
                 nav.style.setProperty('display', 'flex', 'important');
+                nav.style.setProperty('visibility', 'visible', 'important');
             } else {
                 nav.style.setProperty('display', 'none', 'important');
             }
         }
         
-        // Initial check
-        window.addEventListener('load', ensureNav);
-        // Periodic check (every 500ms) to fight against Blazor DOM updates
-        setInterval(ensureNav, 500);
+        // Ensure nav exists immediately
+        ensureNav();
         
-        // Mutation observer to detect removal
+        // Check on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ensureNav);
+        }
+        window.addEventListener('load', ensureNav);
+        
+        // Periodic check every 300ms
+        setInterval(ensureNav, 300);
+        
+        // Watch for window resize
+        window.addEventListener('resize', ensureNav);
+        
+        // Mutation observer for DOM changes
         const observer = new MutationObserver((mutations) => {
             ensureNav();
         });
-        observer.observe(document.body, { childList: true });
+        observer.observe(document.body, { childList: true, subtree: false });
+        
+        // Handle Blazor navigation (when URL changes)
+        if (window.Blazor) {
+            window.Blazor.addEventListener('enhancedload', ensureNav);
+        }
     })();
     </script>
 
