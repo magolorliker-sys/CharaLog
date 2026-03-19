@@ -223,7 +223,7 @@ html, body {
 }
 
 .mud-text-disabled { 
-    color: #b0b0b0 !important; 
+    color: #808080 !important; 
 }
 
 /* Icons */
@@ -240,7 +240,7 @@ html, body {
 }
 
 .mud-icon-disabled { 
-    color: #a0a0a0 !important; 
+    color: #606060 !important; 
 }
 
 /* Buttons */
@@ -293,14 +293,6 @@ html, body {
     color: #d0d0d0 !important;
 }
 
-.mud-input-placeholder {
-    color: #b0b0b0 !important;
-}
-
-.mud-input-adornment-icon {
-    color: #d0d0d0 !important;
-}
-
 .mud-input-slot {
     color: #ffffff !important;
 }
@@ -328,7 +320,7 @@ html, body {
 }
 
 .mud-text-field input::placeholder {
-    color: #b0b0b0 !important;
+    color: #808080 !important;
 }
 
 .mud-text-field label {
@@ -939,21 +931,4 @@ code {
     body {
         padding-bottom: 0 !important;
     }
-}
-
-/* --- Added for improved dark mode visibility --- */
-.mud-input-placeholder {
-    color: #b0b0b0 !important;
-}
-
-.mud-input-adornment-icon {
-    color: #d0d0d0 !important;
-}
-
-.mud-text-disabled {
-    color: #b0b0b0 !important;
-}
-
-.mud-icon-disabled {
-    color: #a0a0a0 !important;
 }
