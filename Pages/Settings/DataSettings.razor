@@ -127,9 +127,16 @@
 
         var fileName = $"charalog_{DateTime.Now:yyyyMMdd_HHmmss}.json";
 
-        // JS経由でダウンロード
-        await JS.InvokeVoidAsync("downloadFile", fileName, "application/json", json);
-        Snackbar.Add("エクスポートしました", Severity.Success);
+        // JS経由でダウンロード(失敗時は downloadFile 側が例外を投げる)
+        try
+        {
+            await JS.InvokeVoidAsync("downloadFile", fileName, "application/json", json);
+            Snackbar.Add("エクスポートしました", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"エクスポートに失敗しました: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task OnImportFileSelected(IBrowserFile file)
