@@ -1,0 +1,231 @@
+﻿@page "/characters/new"
+@page "/characters/{CharacterId:guid}/edit"
+@inject IStorageService Storage
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>@(_isNew ? "キャラクター登録" : "キャラクター編集") — CharaLog</PageTitle>
+
+<MudBreadcrumbs Items="_breadcrumbs" Class="mb-4 px-0" />
+
+<MudText Typo="Typo.h4" Style="font-weight:600;" Class="mb-1">
+    キャラクター@(_isNew ? "登録" : "編集")
+</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+    キャラクターのプロフィールを登録します
+</MudText>
+
+<MudPaper Outlined="true" Class="pa-6" Style="max-width:720px;">
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        @* ── 基本情報 ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">基本情報</MudText>
+
+        <MudSelect T="Guid"
+                   @bind-Value="_model.WorkId"
+                   Label="所属作品"
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   Class="mb-4">
+            <MudSelectItem T="Guid" Value="Guid.Empty" Disabled="true">— 作品を選択 —</MudSelectItem>
+            @foreach (var w in _works)
+            {
+                <MudSelectItem T="Guid" Value="@w.WorkId">@w.Title</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField @bind-Value="_model.Name"
+                      Label="キャラクター名"
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      RequiredError="名前は必須です"
+                      Class="mb-6" />
+
+        <MudDivider Class="mb-4" />
+
+        @* ── アイコン・画像 ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">アイコン・画像</MudText>
+
+        <MudGrid Spacing="3" Class="mb-4">
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.body2" Class="mb-1">アイコン文字（絵文字1文字）</MudText>
+
+                @* アバタープレビュー *@
+                <MudAvatar Style="width:56px; height:56px; font-size:28px; margin-bottom:10px;"
+                           Color="Color.Secondary">
+                    @if (!string.IsNullOrEmpty(_model.ImageBase64))
+                    {
+                        <MudImage Src="@_model.ImageBase64" Alt="preview" />
+                    }
+                    else if (!string.IsNullOrEmpty(_model.IconChar))
+                    {
+                        @_model.IconChar
+                    }
+                    else if (!string.IsNullOrEmpty(_model.Name))
+                    {
+                        @_model.Name[..1]
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Person" />
+                    }
+                </MudAvatar>
+
+                <MudTextField @bind-Value="_model.IconChar"
+                              Label="絵文字アイコン"
+                              Variant="Variant.Outlined"
+                              Placeholder="例: ⚔️"
+                              Margin="Margin.Dense"
+                              inputProps='@(new Dictionary<string, object> { ["maxlength"] = "2" })'
+                              HelperText="1文字のみ入力（未入力時は名前の頭文字を表示）"
+                              OnInput="ClampIconChar" />
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.body2" Class="mb-2">プロフィール画像</MudText>
+                <MudFileUpload T="IBrowserFile"
+                               FilesChanged="OnImageSelected"
+                               Accept=".png,.jpg,.jpeg,.webp">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined"
+                                   StartIcon="@Icons.Material.Filled.Upload">
+                            画像を選択
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+                @if (!string.IsNullOrEmpty(_model.ImageBase64))
+                {
+                    <MudButton Size="Size.Small"
+                               Color="Color.Error"
+                               Class="mt-2"
+                               OnClick="@(() => _model.ImageBase64 = null)">
+                        画像を削除
+                    </MudButton>
+                }
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 d-block">
+                    PNG / JPG / WebP · 5MB以内
+                </MudText>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="mb-4" />
+
+        @* ── プロフィール ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">プロフィール（任意）</MudText>
+
+        <MudGrid Spacing="3" Class="mb-4">
+            <MudItem xs="6" sm="3">
+                <MudNumericField T="float?"
+                                 @bind-Value="_model.Height"
+                                 Label="身長 (cm)"
+                                 Variant="Variant.Outlined"
+                                 Min="0" Max="999" />
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudNumericField T="float?"
+                                 @bind-Value="_model.Weight"
+                                 Label="体重 (kg)"
+                                 Variant="Variant.Outlined"
+                                 Min="0" Max="999" />
+            </MudItem>
+        </MudGrid>
+
+        <MudTextField @bind-Value="_model.Note"
+                      Label="概要・メモ"
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      Class="mb-6" />
+
+        <MudDivider Class="mb-4" />
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+            <MudButton Variant="Variant.Outlined"
+                       OnClick="@(() => Nav.NavigateTo("characters"))">
+                キャンセル
+            </MudButton>
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary">
+                保存する
+            </MudButton>
+        </MudStack>
+    </EditForm>
+</MudPaper>
+
+@code {
+    [Parameter] public Guid? CharacterId { get; set; }
+
+    private Character    _model = new();
+    private List<Work>   _works = [];
+    private bool         _isNew => CharacterId is null;
+
+    private List<BreadcrumbItem> _breadcrumbs =>
+    [
+        new("キャラクター一覧", href: "/characters"),
+        new(_isNew ? "新規登録" : "編集", href: null, disabled: true)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _works = await Storage.GetWorksAsync();
+
+        if (!_isNew)
+        {
+            var chars = await Storage.GetCharactersAsync();
+            _model = chars.FirstOrDefault(c => c.CharacterId == CharacterId) ?? new Character();
+        }
+    }
+
+    // 絵文字を1文字に制限（サロゲートペア考慮）
+    private void ClampIconChar(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? string.Empty;
+        if (string.IsNullOrEmpty(input)) { _model.IconChar = null; return; }
+
+        var enumerator = System.Globalization.StringInfo.GetTextElementEnumerator(input);
+        enumerator.MoveNext();
+        _model.IconChar = enumerator.GetTextElement();
+    }
+
+    // 画像をBase64に変換
+    private async Task OnImageSelected(IBrowserFile file)
+    {
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            Snackbar.Add("5MB以下の画像を選択してください", Severity.Warning);
+            return;
+        }
+        using var stream = file.OpenReadStream(5 * 1024 * 1024);
+        using var ms     = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var base64   = Convert.ToBase64String(ms.ToArray());
+        var mimeType = file.ContentType;
+        _model.ImageBase64 = $"data:{mimeType};base64,{base64}";
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_model.WorkId == Guid.Empty)
+        {
+            Snackbar.Add("所属作品を選択してください", Severity.Warning);
+            return;
+        }
+
+        var chars = await Storage.GetCharactersAsync();
+
+        if (_isNew)
+        {
+            chars.Add(_model);
+        }
+        else
+        {
+            var idx = chars.FindIndex(c => c.CharacterId == _model.CharacterId);
+            if (idx >= 0) chars[idx] = _model;
+        }
+
+        await Storage.SaveCharactersAsync(chars);
+        Snackbar.Add(_isNew ? "キャラクターを登録しました" : "キャラクターを更新しました", Severity.Success);
+        Nav.NavigateTo("characters");
+    }
+}

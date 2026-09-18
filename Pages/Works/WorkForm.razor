@@ -1,0 +1,173 @@
+﻿@page "/works/new"
+@page "/works/{WorkId:guid}/edit"
+@inject IStorageService Storage
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_isNew ? "作品登録" : "作品編集") — CharaLog</PageTitle>
+
+@* パンくずリスト *@
+<MudBreadcrumbs Items="_breadcrumbs" Class="mb-4 px-0" />
+
+<MudText Typo="Typo.h4" Style="font-weight:600;" Class="mb-1">
+    作品@(_isNew ? "登録" : "編集")
+</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+    作品情報と各話のサブタイトルを登録します
+</MudText>
+
+<MudPaper Outlined="true" Class="pa-6" Style="max-width:720px;">
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+
+        @* ── 基本情報 ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">
+            基本情報
+        </MudText>
+
+        <MudTextField @bind-Value="_model.Title"
+                      Label="作品タイトル"
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      RequiredError="タイトルは必須です"
+                      Class="mb-4" />
+
+        <MudGrid Spacing="3" Class="mb-4">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="Genre"
+                           @bind-Value="_model.Genre"
+                           Label="ジャンル"
+                           Variant="Variant.Outlined">
+                    @foreach (var g in Enum.GetValues<Genre>())
+                    {
+                        <MudSelectItem T="Genre" Value="g">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@g.ToIcon()" Size="Size.Small" />
+                                <span>@g.ToDisplayName()</span>
+                            </MudStack>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="int"
+                                 @bind-Value="_model.TotalEpisodes"
+                                 Label="総話数"
+                                 Variant="Variant.Outlined"
+                                 Min="1" Max="9999"
+                                 Required="true"
+                                 OnBlur="SyncEpisodeList" />
+            </MudItem>
+        </MudGrid>
+
+        <MudTextField @bind-Value="_model.Note"
+                      Label="メモ（任意）"
+                      Variant="Variant.Outlined"
+                      Lines="2"
+                      Class="mb-6" />
+
+        <MudDivider Class="mb-4" />
+
+        @* ── 話数サブタイトル ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">
+            話数サブタイトル（任意）
+        </MudText>
+
+        <MudStack Spacing="2" Class="mb-4">
+            @for (int i = 0; i < _model.Episodes.Count; i++)
+            {
+                var idx = i;
+                <MudGrid Spacing="2" AlignItems="AlignItems.Center">
+                    <MudItem xs="2">
+                        <MudChip T="string" Disabled="true" Variant="Variant.Outlined" Size="Size.Small">
+                            第@(_model.Episodes[idx].EpisodeNo)話
+                        </MudChip>
+                    </MudItem>
+                    <MudItem xs="10">
+                        <MudTextField @bind-Value="_model.Episodes[idx].SubTitle"
+                                      Placeholder="サブタイトルを入力（任意）"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense" />
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudStack>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-6">
+            ※ 総話数を変更すると入力欄が自動で増減します
+        </MudText>
+
+        <MudDivider Class="mb-4" />
+
+        @* ── フッターボタン ── *@
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+            <MudButton Variant="Variant.Outlined"
+                       OnClick="@(() => Nav.NavigateTo("/"))">
+                キャンセル
+            </MudButton>
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary">
+                保存する
+            </MudButton>
+        </MudStack>
+    </EditForm>
+</MudPaper>
+
+@code {
+    [Parameter] public Guid? WorkId { get; set; }
+
+    private Work _model = new();
+    private bool _isNew => WorkId is null;
+
+    private List<BreadcrumbItem> _breadcrumbs =>
+    [
+        new("作品一覧", href: "/"),
+        new(_isNew ? "新規登録" : "編集", href: null, disabled: true)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!_isNew)
+        {
+            var works = await Storage.GetWorksAsync();
+            _model = works.FirstOrDefault(w => w.WorkId == WorkId) ?? new Work();
+        }
+        SyncEpisodeList();
+    }
+
+    // 話数が変わったとき Episode リストを同期
+    private void SyncEpisodeList()
+    {
+        var current = _model.Episodes.Count;
+        var target = _model.TotalEpisodes;
+
+        if (target > current)
+        {
+            for (int i = current + 1; i <= target; i++)
+                _model.Episodes.Add(new Episode { EpisodeNo = i });
+        }
+        else if (target < current)
+        {
+            _model.Episodes.RemoveRange(target, current - target);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        var works = await Storage.GetWorksAsync();
+
+        if (_isNew)
+        {
+            works.Add(_model);
+        }
+        else
+        {
+            var idx = works.FindIndex(w => w.WorkId == _model.WorkId);
+            if (idx >= 0) works[idx] = _model;
+        }
+
+        await Storage.SaveWorksAsync(works);
+        Snackbar.Add(_isNew ? "作品を登録しました" : "作品を更新しました", Severity.Success);
+        Nav.NavigateTo("/");
+    }
+}

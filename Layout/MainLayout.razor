@@ -1,0 +1,75 @@
+﻿@inherits LayoutComponentBase
+@using CharaLog.Layout
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Dark">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       Class="mr-2"
+                       OnClick="@(() => _drawerOpen = !_drawerOpen)" />
+        <MudText Typo="Typo.h6" Style="font-weight:600; letter-spacing:.02em;">
+            Chara<span style="color:#e8763a;">Log</span>
+        </MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.IosShare"
+                       Color="Color.Inherit"
+                       Title="データ管理"
+                       Href="settings" />
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               Variant="DrawerVariant.Responsive"
+               Breakpoint="Breakpoint.Md"
+               Elevation="1">
+        <MudNavMenu>
+            <MudNavLink Href="" Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.MovieFilter">
+                作品一覧
+            </MudNavLink>
+            <MudNavLink Href="characters"
+                        Icon="@Icons.Material.Filled.People">
+                キャラクター一覧
+            </MudNavLink>
+            <MudNavLink Href="record"
+                        Icon="@Icons.Material.Filled.EditNote">
+                登場を記録
+            </MudNavLink>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="settings"
+                        Icon="@Icons.Material.Filled.ImportExport">
+                データ管理
+            </MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent Class="charalog-main">
+        <MudContainer MaxWidth="MaxWidth.Large" Class="pa-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+
+    @* ── スマホ用ボトムナビゲーション（画面幅が狭いときだけ表示） ── *@
+    <div class="mobile-bottom-nav">
+        <NavLink href="" Match="NavLinkMatch.All" class="mobile-nav-item">
+            <MudIcon Icon="@Icons.Material.Filled.MovieFilter" Size="Size.Small" />
+            <span>作品</span>
+        </NavLink>
+        <NavLink href="characters" class="mobile-nav-item">
+            <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
+            <span>キャラ</span>
+        </NavLink>
+        <NavLink href="record" class="mobile-nav-item">
+            <MudIcon Icon="@Icons.Material.Filled.EditNote" Size="Size.Small" />
+            <span>記録</span>
+        </NavLink>
+        <NavLink href="settings" class="mobile-nav-item">
+            <MudIcon Icon="@Icons.Material.Filled.ImportExport" Size="Size.Small" />
+            <span>設定</span>
+        </NavLink>
+    </div>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+}

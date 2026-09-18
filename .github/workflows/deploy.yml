@@ -1,0 +1,49 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore CharaLog.csproj
+
+      - name: Publish (Release)
+        run: dotnet publish CharaLog.csproj -c Release -o publish_output --nologo
+
+      - name: Prepare for GitHub Pages (project site)
+        run: |
+          set -e
+          PUB_DIR="publish_output/wwwroot"
+          # GitHub Pages のプロジェクトサイトは https://<user>.github.io/<repo>/ 配下になるため
+          # base href をリポジトリ名に合わせて書き換える（ローカル開発時は "/" のまま使えるようにするための後処理）
+          sed -i 's#<base href="/" />#<base href="/CharaLog/" />#' "$PUB_DIR/index.html"
+          # 直リンクや再読み込み時に 404 にならないよう .nojekyll を配置
+          touch "$PUB_DIR/.nojekyll"
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: publish_output/wwwroot
+          publish_branch: gh-pages
+          force_orphan: true

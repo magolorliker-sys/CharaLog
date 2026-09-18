@@ -1,0 +1,181 @@
+﻿@page "/characters/{CharacterId:guid}"
+@inject IStorageService Storage
+@inject NavigationManager Nav
+@inject IDialogService Dialog
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_chara?.Name ?? "キャラクター詳細") — CharaLog</PageTitle>
+
+@if (_chara is null)
+{
+    <MudText>読み込み中...</MudText>
+    return;
+}
+
+<MudBreadcrumbs Items="_breadcrumbs" Class="mb-4 px-0" />
+
+@* ── キャラクターヘッダー ── *@
+<MudPaper Outlined="true" Class="pa-5 mb-5">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+        <MudAvatar Style="width:80px; height:80px; font-size:40px;" Color="Color.Secondary">
+            @if (!string.IsNullOrEmpty(_chara.ImageBase64))
+            {
+                <MudImage Src="@_chara.ImageBase64" Alt="@_chara.Name" />
+            }
+            else if (!string.IsNullOrEmpty(_chara.IconChar))
+            {
+                @_chara.IconChar
+            }
+            else
+            {
+                @_chara.Name[..1]
+            }
+        </MudAvatar>
+
+        <div style="flex:1;">
+            <MudText Typo="Typo.h4" Style="font-weight:600;">@_chara.Name</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                📺 @_workTitle
+            </MudText>
+            <MudStack Row="true" Spacing="3">
+                @if (_chara.Height.HasValue)
+                {
+                    <MudText Typo="Typo.body2">身長: <strong>@_chara.Height cm</strong></MudText>
+                }
+                @if (_chara.Weight.HasValue)
+                {
+                    <MudText Typo="Typo.body2">体重: <strong>@_chara.Weight kg</strong></MudText>
+                }
+                <MudText Typo="Typo.body2">
+                    登場話数: <strong>@_appearances.Count 話</strong>
+                </MudText>
+            </MudStack>
+        </div>
+
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Edit"
+                       OnClick="@(() => Nav.NavigateTo($"characters/{CharacterId}/edit"))">
+                編集
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@(() => Nav.NavigateTo($"record?charId={CharacterId}"))">
+                登場を記録
+            </MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>
+
+@* ── 登場記録一覧 ── *@
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+    <MudText Typo="Typo.h6" Style="font-weight:600;">登場記録一覧</MudText>
+    <MudStack Row="true" Spacing="1">
+        @foreach (var grp in _appearances.GroupBy(a => a.AppearType).OrderBy(g => (int)g.Key))
+        {
+            var color = grp.Key.ToMudColor();
+            <MudChip T="string" Size="Size.Small" Color="@color" Variant="Variant.Outlined">
+                @grp.Key.ToDisplayName() ×@grp.Count()
+            </MudChip>
+        }
+    </MudStack>
+</MudStack>
+
+<MudPaper Outlined="true">
+    @if (_appearances.Count == 0)
+    {
+        <div class="pa-6" style="text-align:center;">
+            <MudIcon Icon="@Icons.Material.Filled.EditNote"
+                     Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+            <MudText Color="Color.Secondary">まだ登場記録がありません</MudText>
+            <MudButton Class="mt-3"
+                       Variant="Variant.Outlined"
+                       OnClick="@(() => Nav.NavigateTo($"record?charId={CharacterId}"))">
+                最初の記録を追加
+            </MudButton>
+        </div>
+    }
+    else
+    {
+        <MudList T="Appearance" Dense="false">
+            @foreach (var ap in _appearances)
+            {
+                var color = ap.AppearType.ToMudColor();
+                var subtitle = GetSubTitle(ap.EpisodeNo);
+                <MudListItem T="Appearance">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Style="width:100%;">
+                        <MudChip T="string"
+                                 Variant="Variant.Outlined"
+                                 Size="Size.Small"
+                                 Style="min-width:60px; font-weight:600;">
+                            第@(ap.EpisodeNo)話
+                        </MudChip>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Style="flex:1;">
+                            @(string.IsNullOrEmpty(subtitle) ? "（サブタイトルなし）" : subtitle)
+                        </MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@color" Variant="Variant.Outlined">
+                            @ap.AppearType.ToDisplayName()
+                        </MudChip>
+                        @if (!string.IsNullOrEmpty(ap.Note))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Style="flex:1;">
+                                @ap.Note
+                            </MudText>
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       OnClick="@(() => DeleteAppearance(ap))" />
+                    </MudStack>
+                </MudListItem>
+                <MudDivider />
+            }
+        </MudList>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public Guid CharacterId { get; set; }
+
+    private Character? _chara = null;
+    private string _workTitle = string.Empty;
+    private List<Appearance> _appearances = [];
+    private List<Episode> _episodes = [];
+
+    private List<BreadcrumbItem> _breadcrumbs =>
+    [
+        new("キャラクター一覧", href: "/characters"),
+        new(_chara?.Name ?? "詳細", href: null, disabled: true)
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var chars = await Storage.GetCharactersAsync();
+        _chara = chars.FirstOrDefault(c => c.CharacterId == CharacterId);
+        if (_chara is null) return;
+
+        var works = await Storage.GetWorksAsync();
+        var work = works.FirstOrDefault(w => w.WorkId == _chara.WorkId);
+        _workTitle = work?.Title ?? "不明";
+        _episodes = work?.Episodes ?? [];
+
+        var all = await Storage.GetAppearancesAsync();
+        _appearances = all
+            .Where(a => a.CharacterId == CharacterId)
+            .OrderBy(a => a.EpisodeNo)
+            .ToList();
+    }
+
+    private string GetSubTitle(int episodeNo) =>
+        _episodes.FirstOrDefault(e => e.EpisodeNo == episodeNo)?.SubTitle ?? string.Empty;
+
+    private async Task DeleteAppearance(Appearance ap)
+    {
+        var all = await Storage.GetAppearancesAsync();
+        all.RemoveAll(a => a.AppearanceId == ap.AppearanceId);
+        await Storage.SaveAppearancesAsync(all);
+        _appearances.Remove(ap);
+        Snackbar.Add("記録を削除しました", Severity.Info);
+    }
+}

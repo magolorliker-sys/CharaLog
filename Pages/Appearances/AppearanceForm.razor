@@ -1,0 +1,233 @@
+﻿@page "/record"
+@inject IStorageService Storage
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>登場記録 — CharaLog</PageTitle>
+
+<MudText Typo="Typo.h4" Style="font-weight:600;" Class="mb-1">登場記録</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+    作品 → キャラクター → 話数 → 登場形式の順に選択してください
+</MudText>
+
+<MudPaper Outlined="true" Class="pa-6" Style="max-width:720px;">
+    <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+
+        @* ── ① 作品・キャラクター ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">
+            ① 作品・キャラクターを選択
+        </MudText>
+
+        <MudSelect T="Guid"
+                   Value="_selectedWorkId"
+                   ValueChanged="OnWorkChanged"
+                   Label="作品"
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   Class="mb-4">
+            <MudSelectItem T="Guid" Value="Guid.Empty" Disabled="true">— 作品を選択 —</MudSelectItem>
+            @foreach (var w in _works)
+            {
+                <MudSelectItem T="Guid" Value="@w.WorkId">@w.Title</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="Guid"
+                   @bind-Value="_model.CharacterId"
+                   Label="キャラクター"
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   Disabled="@(_selectedWorkId == Guid.Empty)"
+                   Class="mb-6">
+            <MudSelectItem T="Guid" Value="Guid.Empty" Disabled="true">— キャラクターを選択 —</MudSelectItem>
+            @foreach (var c in _filteredChars)
+            {
+                <MudSelectItem T="Guid" Value="@c.CharacterId">
+                    @(!string.IsNullOrEmpty(c.IconChar) ? $"{c.IconChar} " : "")@c.Name
+                </MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudDivider Class="mb-4" />
+
+        @* ── ② 話数 ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">
+            ② 話数を選択
+        </MudText>
+
+        <MudGrid Spacing="3" Class="mb-6">
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int"
+                           @bind-Value="_model.EpisodeNo"
+                           Label="話数"
+                           Variant="Variant.Outlined"
+                           Required="true"
+                           Disabled="@(_selectedWorkId == Guid.Empty)">
+                    <MudSelectItem T="int" Value="0" Disabled="true">— 話数を選択 —</MudSelectItem>
+                    @foreach (var ep in _episodes)
+                    {
+                        <MudSelectItem T="int" Value="@ep.EpisodeNo">
+                            第@(ep.EpisodeNo)話@(!string.IsNullOrEmpty(ep.SubTitle) ? $"「{ep.SubTitle}」" : "")
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudTextField @bind-Value="_model.Note"
+                              Label="登場シーン・備考（任意）"
+                              Variant="Variant.Outlined"
+                              Placeholder="例: 冒頭の訓練シーン" />
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="mb-4" />
+
+        @* ── ③ 登場形式 ── *@
+        <MudText Typo="Typo.overline" Color="Color.Secondary" Class="mb-3 d-block">
+            ③ 登場形式を選択
+        </MudText>
+
+        <MudGrid Spacing="2" Class="mb-6">
+            @foreach (var type in Enum.GetValues<AppearanceType>())
+            {
+                var isSelected = _model.AppearType == type;
+                var color      = type.ToMudColor();
+                <MudItem xs="12" sm="6">
+                    <MudPaper Outlined="true"
+                              Style="@($"cursor:pointer; border-width:{(isSelected ? "2px" : "1px")};")"
+                              Class="@($"pa-3 type-option {(isSelected ? "type-option--selected" : "")}")"
+                              @onclick="@(() => _model.AppearType = type)">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@color"
+                                     Variant="Variant.Filled"
+                                     Style="width:10px; height:10px; min-width:10px; border-radius:50%; padding:0;" />
+                            <div>
+                                <MudText Typo="Typo.body2" Style="font-weight:600;">
+                                    @type.ToDisplayName()
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @TypeDescription(type)
+                                </MudText>
+                            </div>
+                            @if (isSelected)
+                            {
+                                <MudSpacer />
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
+                                         Color="@color" Size="Size.Small" />
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
+        <MudDivider Class="mb-4" />
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+            <MudButton Variant="Variant.Outlined" OnClick="Reset">
+                リセット
+            </MudButton>
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary">
+                記録を保存
+            </MudButton>
+        </MudStack>
+
+    </EditForm>
+</MudPaper>
+
+@code {
+    [SupplyParameterFromQuery] public Guid? CharId { get; set; }
+
+    private Appearance      _model           = new();
+    private List<Work>      _works           = [];
+    private List<Character> _characters      = [];
+    private List<Character> _filteredChars   = [];
+    private List<Episode>   _episodes        = [];
+    private Guid            _selectedWorkId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _works      = await Storage.GetWorksAsync();
+        _characters = await Storage.GetCharactersAsync();
+
+        // キャラクター詳細ページから遷移してきた場合
+        if (CharId.HasValue)
+        {
+            var chara = _characters.FirstOrDefault(c => c.CharacterId == CharId.Value);
+            if (chara is not null)
+            {
+                _model.CharacterId = chara.CharacterId;
+                _selectedWorkId    = chara.WorkId;
+                OnWorkChanged(_selectedWorkId);
+            }
+        }
+    }
+
+    private void OnWorkChanged(Guid workId)
+    {
+        _selectedWorkId  = workId;
+        _filteredChars   = _characters.Where(c => c.WorkId == workId).ToList();
+        _model.CharacterId = Guid.Empty;
+        _model.EpisodeNo   = 0;
+
+        var work = _works.FirstOrDefault(w => w.WorkId == workId);
+        _episodes = work?.Episodes.Count > 0
+            ? work.Episodes
+            : Enumerable.Range(1, work?.TotalEpisodes ?? 0)
+                        .Select(i => new Episode { EpisodeNo = i })
+                        .ToList();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_model.CharacterId == Guid.Empty)
+        {
+            Snackbar.Add("キャラクターを選択してください", Severity.Warning);
+            return;
+        }
+        if (_model.EpisodeNo == 0)
+        {
+            Snackbar.Add("話数を選択してください", Severity.Warning);
+            return;
+        }
+
+        // 同一キャラ・同一話数の重複チェック
+        var all = await Storage.GetAppearancesAsync();
+        var dup = all.Any(a =>
+            a.CharacterId == _model.CharacterId &&
+            a.EpisodeNo   == _model.EpisodeNo);
+        if (dup)
+        {
+            Snackbar.Add("この話数はすでに記録済みです", Severity.Warning);
+            return;
+        }
+
+        _model.AppearanceId = Guid.NewGuid();
+        all.Add(_model);
+        await Storage.SaveAppearancesAsync(all);
+        Snackbar.Add("登場記録を保存しました", Severity.Success);
+
+        // 記録後にキャラクター詳細へ戻る
+        Nav.NavigateTo($"characters/{_model.CharacterId}");
+    }
+
+    private void Reset()
+    {
+        _model          = new Appearance();
+        _selectedWorkId = Guid.Empty;
+        _filteredChars  = [];
+        _episodes       = [];
+    }
+
+    private static string TypeDescription(AppearanceType t) => t switch
+    {
+        AppearanceType.ActiveRole     => "台詞あり＋行動がメインで描かれる",
+        AppearanceType.HasDialogue    => "セリフはあるが主役ではない",
+        AppearanceType.AppearanceOnly => "映像に映るが台詞なし",
+        AppearanceType.MentionOnly    => "名前・回想・写真などで言及",
+        _ => string.Empty
+    };
+}

@@ -1,0 +1,166 @@
+﻿@page "/settings"
+@inject IStorageService Storage
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<PageTitle>データ管理 — CharaLog</PageTitle>
+
+<MudText Typo="Typo.h4" Style="font-weight:600;" Class="mb-1">データ管理</MudText>
+<MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+    JSONファイルへのエクスポート・インポートができます
+</MudText>
+
+<MudGrid Spacing="4">
+
+    @* ── エクスポート ── *@
+    <MudItem xs="12" sm="6">
+        <MudPaper Outlined="true" Class="pa-5" Style="height:100%;">
+            <MudIcon Icon="@Icons.Material.Filled.FileUpload"
+                     Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+            <MudText Typo="Typo.h6" Style="font-weight:600;" Class="mb-2">エクスポート</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                全データ（作品・キャラクター・登場記録）をJSONファイルとして
+                ダウンロードします。画像はBase64で埋め込まれます。
+            </MudText>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       OnClick="ExportData"
+                       FullWidth="true">
+                JSONをダウンロード
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+
+    @* ── インポート ── *@
+    <MudItem xs="12" sm="6">
+        <MudPaper Outlined="true" Class="pa-5" Style="height:100%;">
+            <MudIcon Icon="@Icons.Material.Filled.FileDownload"
+                     Size="Size.Large" Color="Color.Secondary" Class="mb-3" />
+            <MudText Typo="Typo.h6" Style="font-weight:600;" Class="mb-2">インポート</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                エクスポートしたJSONファイルを読み込みます。
+                既存データへの追記か上書きかを選択できます。
+            </MudText>
+
+            <MudSelect T="bool"
+                       @bind-Value="_overwrite"
+                       Label="インポート方式"
+                       Variant="Variant.Outlined"
+                       Class="mb-3">
+                <MudSelectItem T="bool" Value="false">既存データに追記</MudSelectItem>
+                <MudSelectItem T="bool" Value="true">既存データを上書き</MudSelectItem>
+            </MudSelect>
+
+            <MudFileUpload T="IBrowserFile"
+                           FilesChanged="OnImportFileSelected"
+                           Accept=".json">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.FolderOpen"
+                               FullWidth="true">
+                        JSONファイルを選択
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+        </MudPaper>
+    </MudItem>
+
+</MudGrid>
+
+@* ── データ概要 ── *@
+<MudPaper Outlined="true" Class="pa-5 mt-5">
+    <MudText Typo="Typo.h6" Style="font-weight:600;" Class="mb-4">現在のデータ概要</MudText>
+    <MudGrid Spacing="3">
+        <MudItem xs="4">
+            <div style="text-align:center; padding:12px;
+                        background:var(--mud-palette-background-grey);
+                        border-radius:8px;">
+                <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight:600;">
+                    @_summary.WorkCount
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">作品</MudText>
+            </div>
+        </MudItem>
+        <MudItem xs="4">
+            <div style="text-align:center; padding:12px;
+                        background:var(--mud-palette-background-grey);
+                        border-radius:8px;">
+                <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight:600;">
+                    @_summary.CharCount
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">キャラクター</MudText>
+            </div>
+        </MudItem>
+        <MudItem xs="4">
+            <div style="text-align:center; padding:12px;
+                        background:var(--mud-palette-background-grey);
+                        border-radius:8px;">
+                <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight:600;">
+                    @_summary.AppearCount
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">登場記録</MudText>
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+    private bool _overwrite = false;
+    private (int WorkCount, int CharCount, int AppearCount) _summary;
+
+    protected override async Task OnInitializedAsync() => await LoadSummary();
+
+    private async Task LoadSummary()
+    {
+        var data = await Storage.ExportAllAsync();
+        _summary = (data.Works.Count, data.Characters.Count, data.Appearances.Count);
+    }
+
+    private async Task ExportData()
+    {
+        var data = await Storage.ExportAllAsync();
+        var json = System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+
+        var fileName = $"charalog_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+
+        // JS経由でダウンロード
+        await JS.InvokeVoidAsync("downloadFile", fileName, "application/json", json);
+        Snackbar.Add("エクスポートしました", Severity.Success);
+    }
+
+    private async Task OnImportFileSelected(IBrowserFile file)
+    {
+        if (!file.Name.EndsWith(".json"))
+        {
+            Snackbar.Add("JSONファイルを選択してください", Severity.Warning);
+            return;
+        }
+        try
+        {
+            using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            using var reader = new System.IO.StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+
+            var data = System.Text.Json.JsonSerializer.Deserialize<AppData>(json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (data is null)
+            {
+                Snackbar.Add("ファイルの読み込みに失敗しました", Severity.Error);
+                return;
+            }
+
+            await Storage.ImportAllAsync(data, _overwrite);
+            await LoadSummary();
+            Snackbar.Add("インポートしました", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("JSONの解析に失敗しました。形式を確認してください", Severity.Error);
+        }
+    }
+}

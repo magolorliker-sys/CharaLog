@@ -1,0 +1,160 @@
+﻿@page "/"
+@page "/Works"
+@inject IStorageService Storage
+@inject NavigationManager Nav
+
+<PageTitle>作品一覧 — CharaLog</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.End" Justify="Justify.SpaceBetween" Class="mb-6">
+    <div>
+        <MudText Typo="Typo.h4" Style="font-weight:600;">作品一覧</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            登録済み作品 @_works.Count 件 · キャラクター @_charCount 人
+        </MudText>
+    </div>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Nav.NavigateTo("works/new"))">
+        作品を登録
+    </MudButton>
+</MudStack>
+
+@* ジャンルフィルタ *@
+<MudChipSet T="Genre?" @bind-SelectedValue="_selectedGenre"
+             SelectionMode="SelectionMode.SingleSelection"
+             Class="mb-5">
+    <MudChip T="Genre?" Value="null" Variant="Variant.Outlined">すべて</MudChip>
+    @foreach (var g in Enum.GetValues<Genre>())
+    {
+        <MudChip T="Genre?" Value="g" Variant="Variant.Outlined">@g.ToDisplayName()</MudChip>
+    }
+</MudChipSet>
+
+@* 作品カードグリッド *@
+<MudGrid Spacing="3">
+    @foreach (var work in FilteredWorks)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Outlined="true"
+                     Class="work-card"
+                     Style="cursor:pointer;"
+                     @onclick="@(() => Nav.NavigateTo($"works/{work.WorkId}"))">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudIcon Icon="@work.Genre.ToIcon()" Color="Color.Primary" Size="Size.Large" />
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6" Style="font-weight:600;">@work.Title</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @work.Genre.ToDisplayName() · 全@(work.TotalEpisodes)話
+                        </MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <a href="/works/@work.WorkId/edit"
+                               @onclick:stopPropagation="true"
+                               style="display:flex; align-items:center; padding:6px; color:inherit;">
+                            <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" />
+                        </a>
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent Class="pt-0">
+                    <MudStack Row="true" Justify="Justify.SpaceAround">
+                        <div class="stat-box">
+                            <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight:600;">
+                                @GetCharCount(work.WorkId)
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">キャラ</MudText>
+                        </div>
+                        <MudDivider Vertical="true" FlexItem="true" />
+                        <div class="stat-box">
+                            <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight:600;">
+                                @GetAppearanceCount(work.WorkId)
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">記録済</MudText>
+                        </div>
+                        <MudDivider Vertical="true" FlexItem="true" />
+                        <div class="stat-box">
+                            <MudText Typo="Typo.h5" Color="Color.Primary" Style="font-weight:600;">
+                                @work.TotalEpisodes
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">話数</MudText>
+                        </div>
+                    </MudStack>
+                </MudCardContent>
+                <MudCardActions Class="pt-0 px-4 pb-3">
+                    @foreach (var type in GetUsedTypes(work.WorkId))
+                    {
+                        var chipColor = type.ToMudColor();
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Color="@chipColor"
+                                 Variant="Variant.Outlined"
+                                 Class="mr-1">
+                            @type.ToDisplayName()
+                        </MudChip>
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+
+    @* 新規登録カード *@
+    <MudItem xs="12" sm="6" md="4">
+        <MudCard Outlined="true"
+                 Style="cursor:pointer; border-style:dashed; min-height:180px;"
+                 @onclick="@(() => Nav.NavigateTo("works/new"))">
+            <MudCardContent Class="d-flex flex-column align-center justify-center" Style="height:180px;">
+                <MudIcon Icon="@Icons.Material.Filled.AddCircleOutline"
+                         Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">新しい作品を登録</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<Work>       _works       = [];
+    private List<Character>  _characters  = [];
+    private List<Appearance> _appearances = [];
+    private Genre?           _selectedGenre;
+
+    private int _charCount => _characters.Count;
+
+    private IEnumerable<Work> FilteredWorks =>
+        _selectedGenre is null
+            ? _works
+            : _works.Where(w => w.Genre == _selectedGenre);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _works       = await Storage.GetWorksAsync();
+        _characters  = await Storage.GetCharactersAsync();
+        _appearances = await Storage.GetAppearancesAsync();
+    }
+
+    private int GetCharCount(Guid workId) =>
+        _characters.Count(c => c.WorkId == workId);
+
+    private int GetAppearanceCount(Guid workId)
+    {
+        var charIds = _characters
+            .Where(c => c.WorkId == workId)
+            .Select(c => c.CharacterId)
+            .ToHashSet();
+        return _appearances.Count(a => charIds.Contains(a.CharacterId));
+    }
+
+    private IEnumerable<AppearanceType> GetUsedTypes(Guid workId)
+    {
+        var charIds = _characters
+            .Where(c => c.WorkId == workId)
+            .Select(c => c.CharacterId)
+            .ToHashSet();
+        return _appearances
+            .Where(a => charIds.Contains(a.CharacterId))
+            .Select(a => a.AppearType)
+            .Distinct()
+            .OrderBy(t => (int)t);
+    }
+}

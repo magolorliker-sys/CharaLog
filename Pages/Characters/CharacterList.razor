@@ -1,0 +1,144 @@
+﻿@page "/characters"
+@inject IStorageService Storage
+@inject NavigationManager Nav
+
+<PageTitle>キャラクター一覧 — CharaLog</PageTitle>
+
+<MudStack Row="true" AlignItems="AlignItems.End" Justify="Justify.SpaceBetween" Class="mb-6">
+    <div>
+        <MudText Typo="Typo.h4" Style="font-weight:600;">キャラクター一覧</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            登録済みキャラクター @_filtered.Count() 人
+        </MudText>
+    </div>
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => Nav.NavigateTo("characters/new"))">
+        キャラを登録
+    </MudButton>
+</MudStack>
+
+@* 作品フィルタ *@
+<MudSelect T="Guid?"
+           @bind-Value="_selectedWorkId"
+           Label="作品で絞り込み"
+           Variant="Variant.Outlined"
+           Clearable="true"
+           Style="max-width:320px;"
+           Class="mb-5">
+    @foreach (var w in _works)
+    {
+        <MudSelectItem T="Guid?" Value="@((Guid?)w.WorkId)">@w.Title</MudSelectItem>
+    }
+</MudSelect>
+
+@* キャラクターカードグリッド *@
+<MudGrid Spacing="3">
+    @foreach (var chara in _filtered)
+    {
+        <MudItem xs="12" sm="6" md="4" lg="3">
+            <MudCard Outlined="true"
+                     Style="cursor:pointer; text-align:center;"
+                     Class="chara-card"
+                     @onclick="@(() => Nav.NavigateTo($"characters/{chara.CharacterId}"))">
+                <MudCardContent Class="pb-2">
+                    @* アバター *@
+                    <MudAvatar Style="width:64px; height:64px; font-size:32px; margin: 8px auto 10px;"
+                               Color="Color.Secondary">
+                        @if (!string.IsNullOrEmpty(chara.ImageBase64))
+                        {
+                            <MudImage Src="@chara.ImageBase64" Alt="@chara.Name" />
+                        }
+                        else if (!string.IsNullOrEmpty(chara.IconChar))
+                        {
+                            @chara.IconChar
+                        }
+                        else
+                        {
+                            @chara.Name[..1]
+                        }
+                    </MudAvatar>
+
+                    <MudText Typo="Typo.subtitle1" Style="font-weight:600;">@chara.Name</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        @GetWorkTitle(chara.WorkId)
+                    </MudText>
+
+                    @* 登場話数チップ *@
+                    <div style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-bottom:8px;">
+                        @foreach (var ap in GetAppearances(chara.CharacterId))
+                        {
+                            var c = ap.AppearType.ToMudColor();
+                            <MudTooltip Text="@ap.AppearType.ToDisplayName()">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Color="@c"
+                                         Variant="Variant.Filled"
+                                         Style="min-width:28px; height:24px; font-size:11px;">
+                                    @ap.EpisodeNo
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                    </div>
+
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        @GetAppearances(chara.CharacterId).Count 話に登場
+                        @if (chara.Height.HasValue)
+                        {
+                            <span> · @chara.Height cm</span>
+                        }
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions Class="justify-end pt-0">
+                    <a href="/characters/@chara.CharacterId/edit"
+                           @onclick:stopPropagation="true"
+                           style="display:flex; align-items:center; padding:6px; color:inherit;">
+                        <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" />
+                    </a>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+
+    @* 新規登録カード *@
+    <MudItem xs="12" sm="6" md="4" lg="3">
+        <MudCard Outlined="true"
+                 Style="cursor:pointer; border-style:dashed; min-height:200px;"
+                 @onclick="@(() => Nav.NavigateTo("characters/new"))">
+            <MudCardContent Class="d-flex flex-column align-center justify-center" Style="height:200px;">
+                <MudIcon Icon="@Icons.Material.Filled.AddCircleOutline"
+                         Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">キャラを追加</MudText>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<Work> _works = [];
+    private List<Character> _characters = [];
+    private List<Appearance> _appearances = [];
+    private Guid? _selectedWorkId;
+
+    private IEnumerable<Character> _filtered =>
+        _selectedWorkId is null
+            ? _characters
+            : _characters.Where(c => c.WorkId == _selectedWorkId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _works = await Storage.GetWorksAsync();
+        _characters = await Storage.GetCharactersAsync();
+        _appearances = await Storage.GetAppearancesAsync();
+    }
+
+    private string GetWorkTitle(Guid workId) =>
+        _works.FirstOrDefault(w => w.WorkId == workId)?.Title ?? "不明";
+
+    private List<Appearance> GetAppearances(Guid charId) =>
+        _appearances
+            .Where(a => a.CharacterId == charId)
+            .OrderBy(a => a.EpisodeNo)
+            .ToList();
+}
