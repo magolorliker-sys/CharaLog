@@ -39,7 +39,7 @@
             <MudCard Outlined="true"
                      Class="work-card"
                      Style="cursor:pointer;"
-                     @onclick="@(() => Nav.NavigateTo($"works/{work.WorkId}"))">
+                     @onclick="@(() => Nav.NavigateTo($"works/{work.WorkId}/edit"))">
                 <MudCardHeader>
                     <CardHeaderAvatar>
                         <MudIcon Icon="@work.Genre.ToIcon()" Color="Color.Primary" Size="Size.Large" />
