@@ -89,14 +89,14 @@ main {
     justify-content: center;
     gap: 2px;
     padding: 6px 0 4px 0;
-    color: var(--mud-palette-text-secondary, #B9BBC6);
+    color: var(--mud-palette-text-secondary, #9DBBAD);
     text-decoration: none;
     font-size: 0.7rem;
     line-height: 1;
 }
 
 ::deep .mobile-nav-item.active {
-    color: var(--mud-palette-primary, #e8763a);
+    color: var(--mud-palette-primary, #0E9A6B);
 }
 
 @media (max-width: 768px) {
@@ -107,7 +107,7 @@ main {
         right: 0;
         bottom: 0;
         z-index: 1300;
-        background: var(--mud-palette-drawer-background, #15161C);
+        background: var(--mud-palette-drawer-background, #003221);
         border-top: 1px solid var(--mud-palette-divider, rgba(255,255,255,0.14));
         padding-bottom: env(safe-area-inset-bottom, 0);
     }
