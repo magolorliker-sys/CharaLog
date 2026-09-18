@@ -34,16 +34,50 @@ jobs:
         run: |
           set -e
           PUB_DIR="publish_output/wwwroot"
+          FW_DIR="$PUB_DIR/_framework"
 
           # GitHub Pages のプロジェクトサイトは https://<user>.github.io/<repo>/ 配下になるため
           # base href をリポジトリ名に合わせて書き換える（ローカル開発時は "/" のまま使えるようにするための後処理）
           sed -i 's#<base href="/" />#<base href="/CharaLog/" />#' "$PUB_DIR/index.html"
 
-          # blazor.webassembly.js だけはビルド時にハッシュ付きファイル名になるため、
-          # index.html 側の参照を実際のファイル名に合わせて書き換える
-          BLAZOR_JS=$(basename "$(ls "$PUB_DIR"/_framework/blazor.webassembly*.js | head -n 1)")
-          echo "Resolved blazor loader file: $BLAZOR_JS"
+          # フィンガープリント(ハッシュ付きファイル名)が有効な場合、blazor.webassembly.js /
+          # dotnet.js / dotnet.native.js / dotnet.runtime.js はビルドのたびに実際のファイル名が
+          # 変わる。index.html はこれらをプレーンな名前で参照している(script src とその内部の
+          # 動的 import)ため、実際に生成されたファイル名を調べて対応付ける。
+          find_hashed() {
+            find "$FW_DIR" -maxdepth 1 -type f | xargs -n1 basename | grep -E "$1" | head -n 1
+          }
+
+          BLAZOR_JS=$(find_hashed '^blazor\.webassembly\.[^.]+\.js$')
+          DOTNET_JS=$(find_hashed '^dotnet\.[^.]+\.js$')
+          DOTNET_NATIVE_JS=$(find_hashed '^dotnet\.native\.[^.]+\.js$')
+          DOTNET_RUNTIME_JS=$(find_hashed '^dotnet\.runtime\.[^.]+\.js$')
+
+          echo "blazor.webassembly.js -> ${BLAZOR_JS:-<not found>}"
+          echo "dotnet.js             -> ${DOTNET_JS:-<not found>}"
+          echo "dotnet.native.js      -> ${DOTNET_NATIVE_JS:-<not found>}"
+          echo "dotnet.runtime.js     -> ${DOTNET_RUNTIME_JS:-<not found>}"
+
+          if [ -z "$BLAZOR_JS" ] || [ -z "$DOTNET_JS" ] || [ -z "$DOTNET_NATIVE_JS" ] || [ -z "$DOTNET_RUNTIME_JS" ]; then
+            echo "::error::Could not resolve one or more fingerprinted framework loader files."
+            exit 1
+          fi
+
+          # <script src="_framework/blazor.webassembly.js"> を実際のファイル名に置き換える
           sed -i "s#_framework/blazor\.webassembly\.js#_framework/${BLAZOR_JS}#" "$PUB_DIR/index.html"
+
+          # blazor.webassembly.js が内部で動的 import する dotnet.js / dotnet.native.js /
+          # dotnet.runtime.js をハッシュ付きファイル名に解決するための import map を挿入する
+          IMPORTMAP_JSON=$(printf '{"imports":{"./_framework/dotnet.js":"./_framework/%s","./_framework/dotnet.native.js":"./_framework/%s","./_framework/dotnet.runtime.js":"./_framework/%s"}}' "$DOTNET_JS" "$DOTNET_NATIVE_JS" "$DOTNET_RUNTIME_JS")
+          SNIPPET=$(printf '<script type="importmap">\n%s\n</script>' "$IMPORTMAP_JSON")
+
+          python3 -c '
+          import sys
+          path, snippet = sys.argv[1], sys.argv[2]
+          html = open(path, encoding="utf-8").read()
+          html = html.replace("</head>", snippet + "\n</head>")
+          open(path, "w", encoding="utf-8").write(html)
+          ' "$PUB_DIR/index.html" "$SNIPPET"
 
           # 直リンクや再読み込み時に 404 にならないよう .nojekyll を配置
           touch "$PUB_DIR/.nojekyll"
