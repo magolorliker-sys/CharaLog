@@ -85,14 +85,33 @@ jobs:
       - name: Verify referenced framework files exist
         run: |
           set -e
-          PUB_DIR="publish_output/wwwroot"
-          grep -oE '_framework/[A-Za-z0-9._-]+\.(js|wasm)' "$PUB_DIR/index.html" | sort -u | while read -r ref; do
-            if [ ! -f "$PUB_DIR/$ref" ]; then
-              echo "::error::index.html references missing file: $ref"
-              exit 1
-            fi
-          done
-          echo "All referenced framework files exist."
+          python3 -c '
+          import re, sys, os, json
+
+          pub_dir = sys.argv[1]
+          index_path = os.path.join(pub_dir, "index.html")
+          html = open(index_path, encoding="utf-8").read()
+
+          # importmap のキー(例: "./_framework/dotnet.js")は実ファイルを指さない
+          # 仮想的なモジュール指定子なので検証対象から除外し、値(実際のハッシュ付き
+          # ファイル名)だけをチェック対象に加える。
+          refs = set()
+          importmap_match = re.search(r"<script type=\"importmap\">\s*(\{.*?\})\s*</script>", html, re.S)
+          if importmap_match:
+              data = json.loads(importmap_match.group(1))
+              for value in data.get("imports", {}).values():
+                  refs.add(value.lstrip("./"))
+              html = html[:importmap_match.start()] + html[importmap_match.end():]
+
+          refs.update(re.findall(r"_framework/[A-Za-z0-9._-]+\.(?:js|wasm)", html))
+
+          missing = [r for r in sorted(refs) if not os.path.isfile(os.path.join(pub_dir, r))]
+          if missing:
+              for r in missing:
+                  print("::error::index.html references missing file: " + r)
+              sys.exit(1)
+          print("All referenced framework files exist: " + ", ".join(sorted(refs)))
+          ' "publish_output/wwwroot"
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
