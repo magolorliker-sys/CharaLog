@@ -7,3 +7,16 @@ obj/
 ## OS
 .DS_Store
 Thumbs.db
+
+## 手動publish時にプロジェクト直下へコピーされがちな成果物（正しい置き場所は wwwroot/ 配下）
+/_framework/
+/_content/
+/css/
+/lib/
+/sample-data/
+/index.html
+/404.html
+/favicon.png
+/icon-192.png
+/CharaLog.styles.css
+/.nojekyll
