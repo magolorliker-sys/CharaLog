@@ -34,11 +34,31 @@ jobs:
         run: |
           set -e
           PUB_DIR="publish_output/wwwroot"
+
           # GitHub Pages のプロジェクトサイトは https://<user>.github.io/<repo>/ 配下になるため
           # base href をリポジトリ名に合わせて書き換える（ローカル開発時は "/" のまま使えるようにするための後処理）
           sed -i 's#<base href="/" />#<base href="/CharaLog/" />#' "$PUB_DIR/index.html"
+
+          # blazor.webassembly.js だけはビルド時にハッシュ付きファイル名になるため、
+          # index.html 側の参照を実際のファイル名に合わせて書き換える
+          BLAZOR_JS=$(basename "$(ls "$PUB_DIR"/_framework/blazor.webassembly*.js | head -n 1)")
+          echo "Resolved blazor loader file: $BLAZOR_JS"
+          sed -i "s#_framework/blazor\.webassembly\.js#_framework/${BLAZOR_JS}#" "$PUB_DIR/index.html"
+
           # 直リンクや再読み込み時に 404 にならないよう .nojekyll を配置
           touch "$PUB_DIR/.nojekyll"
+
+      - name: Verify referenced framework files exist
+        run: |
+          set -e
+          PUB_DIR="publish_output/wwwroot"
+          grep -oE '_framework/[A-Za-z0-9._-]+\.(js|wasm)' "$PUB_DIR/index.html" | sort -u | while read -r ref; do
+            if [ ! -f "$PUB_DIR/$ref" ]; then
+              echo "::error::index.html references missing file: $ref"
+              exit 1
+            fi
+          done
+          echo "All referenced framework files exist."
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
